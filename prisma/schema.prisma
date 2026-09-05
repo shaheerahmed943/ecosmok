@@ -1,0 +1,387 @@
+// =========================================================================
+// BOUTIQUE COMMERCE — PostgreSQL Schema (Prisma ORM)
+// Domain: Boutique / Stitched / Unstitched Apparel E-Commerce
+// =========================================================================
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../backend/node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -------------------------------------------------------------------------
+// ENUMS
+// -------------------------------------------------------------------------
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+  OUT_OF_STOCK
+}
+
+enum ProductType {
+  STITCHED
+  UNSTITCHED
+  READY_TO_WEAR
+  BOUTIQUE_EXCLUSIVE
+  DISPOSABLE
+  POD_SYSTEM
+  E_LIQUID
+  HARDWARE
+  ACCESSORY
+}
+
+enum SizeLabel {
+  XS
+  S
+  M
+  L
+  XL
+  XXL
+  CUSTOM
+  STANDARD
+  TWO_ML
+  TEN_ML
+  THIRTY_ML
+  FIFTY_ML
+  ONE_HUNDRED_ML
+  FOUR_PACK
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  DISPATCHED
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+enum PaymentMethod {
+  COD
+  CARD
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FLAT
+}
+
+enum UserRole {
+  ADMIN
+  CUSTOMER
+}
+
+// -------------------------------------------------------------------------
+// USERS (admin + customer accounts)
+// -------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(CUSTOMER)
+  phone        String?
+
+  orders        Order[]
+  rewardAccount RewardAccount?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+}
+
+// -------------------------------------------------------------------------
+// CATEGORY TREE (self-referential)
+// -------------------------------------------------------------------------
+
+model Category {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String?
+  imageUrl    String?
+  isActive    Boolean @default(true)
+  sortOrder   Int     @default(0)
+
+  parentId String?
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children Category[] @relation("CategoryTree")
+
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parentId])
+  @@index([slug])
+}
+
+// -------------------------------------------------------------------------
+// PRODUCTS
+// -------------------------------------------------------------------------
+
+model Product {
+  id               String        @id @default(cuid())
+  title            String
+  slug             String        @unique
+  description      String
+  fabricDetails    String?
+  careInstructions String?
+  basePrice        Decimal       @db.Decimal(10, 2)
+  status           ProductStatus @default(DRAFT)
+  type             ProductType   @default(UNSTITCHED)
+  isFeatured       Boolean       @default(false)
+  fabricTags       String[] // e.g. ["Lawn", "Chiffon"]
+  metaTitle        String?
+  metaDescription  String?
+  productKind      String        @default("VAPE")
+  nicotineStrength String?
+  flavour          String?
+  deviceType       String?
+  capacity         String?
+  puffCount        Int?
+  batteryCapacity  String?
+  coilResistance   String?
+  pgVgRatio        String?
+  isNicotineFree   Boolean       @default(false)
+  ageRestricted    Boolean       @default(true)
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  variants   ProductVariant[]
+  images     ProductImage[]
+  reviews    Review[]
+  orderItems OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // NOTE: For full-text product search, enable the `fullTextSearch` preview
+  // feature in generator client and add `@@fulltext([title, description])`,
+  // or use a raw `pg_trgm` GIN index migration for fuzzy search in Postgres.
+
+  @@index([categoryId])
+  @@index([status])
+  @@index([isFeatured])
+}
+
+// -------------------------------------------------------------------------
+// VARIANTS (size / color / fabric option combinations)
+// -------------------------------------------------------------------------
+
+model ProductVariant {
+  id        String  @id @default(cuid())
+  sku       String  @unique
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  size          SizeLabel
+  color         String
+  fabricOption  String? // e.g. "Premium Lawn", "Silk Blend"
+  variantPrice  Decimal   @db.Decimal(10, 2) // overrides basePrice when set
+  stockQuantity Int       @default(0)
+  isActive      Boolean   @default(true)
+
+  orderItems OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, size, color, fabricOption])
+  @@index([productId])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  altText   String?
+  isPrimary Boolean @default(false)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+}
+
+// -------------------------------------------------------------------------
+// ORDERS
+// -------------------------------------------------------------------------
+
+model Order {
+  id          String @id @default(cuid())
+  orderNumber String @unique // e.g. BQ-2026-000123
+
+  customerName    String
+  customerEmail   String?
+  customerPhone   String
+  isGuestCheckout Boolean @default(true)
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  status OrderStatus @default(PENDING)
+
+  shippingAddress String
+  shippingCity    String
+  shippingFee     Decimal @db.Decimal(10, 2)
+
+  subtotal       Decimal @db.Decimal(10, 2)
+  discountAmount Decimal @default(0) @db.Decimal(10, 2)
+  totalAmount    Decimal @db.Decimal(10, 2)
+
+  paymentMethod PaymentMethod @default(COD)
+  paymentStatus PaymentStatus @default(PENDING)
+  stripeSessionId String? @unique
+  couponId      String?
+  coupon        Coupon?       @relation(fields: [couponId], references: [id])
+
+  items OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderNumber])
+  @@index([customerPhone])
+  @@index([status])
+  @@index([userId])
+}
+
+model OrderItem {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+
+  @@index([orderId])
+}
+
+// -------------------------------------------------------------------------
+// COUPONS
+// -------------------------------------------------------------------------
+
+model Coupon {
+  id             String       @id @default(cuid())
+  code           String       @unique
+  discountType   DiscountType
+  value          Decimal      @db.Decimal(10, 2)
+  minOrderAmount Decimal      @default(0) @db.Decimal(10, 2)
+  expiresAt      DateTime?
+  isActive       Boolean      @default(true)
+  usageLimit     Int?
+  usageCount     Int          @default(0)
+
+  orders Order[]
+
+  createdAt DateTime @default(now())
+
+  @@index([code])
+}
+
+// -------------------------------------------------------------------------
+// REVIEWS
+// -------------------------------------------------------------------------
+
+model Review {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  rating       Int // 1-5
+  comment      String
+  customerName String
+  imageUrls    String[]
+  isApproved   Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+}
+
+// -------------------------------------------------------------------------
+// SHIPPING RATE MATRIX (admin-configurable, city-based)
+// -------------------------------------------------------------------------
+
+model ShippingRate {
+  id       String  @id @default(cuid())
+  city     String  @unique
+  fee      Decimal @db.Decimal(10, 2)
+  etaDays  Int     @default(3)
+  isActive Boolean @default(true)
+
+  updatedAt DateTime @updatedAt
+}
+
+// -------------------------------------------------------------------------
+// SITE CONTENT (admin-managed homepage / page sections)
+// -------------------------------------------------------------------------
+
+model SiteContent {
+  id        String   @id @default(cuid())
+  key       String   @unique // e.g. "homepage"
+  data      Json // arbitrary structured content — see AdminHomepageContent type
+  updatedAt DateTime @updatedAt
+}
+
+// -------------------------------------------------------------------------
+// LOYALTY / REWARDS
+// -------------------------------------------------------------------------
+
+model RewardAccount {
+  id             String              @id @default(cuid())
+  userId         String              @unique
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance        Int                 @default(0)
+  lifetimeEarned Int                 @default(0)
+  transactions   RewardTransaction[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+}
+
+model RewardTransaction {
+  id        String        @id @default(cuid())
+  accountId String
+  account   RewardAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  points    Int
+  reason    String
+  orderId   String?
+  createdAt DateTime      @default(now())
+
+  @@index([accountId, createdAt])
+}
+
+// -------------------------------------------------------------------------
+// STORE SETTINGS (admin-managed compliance and contact controls)
+// -------------------------------------------------------------------------
+
+model StoreSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+}
