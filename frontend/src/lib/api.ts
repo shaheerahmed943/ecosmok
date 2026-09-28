@@ -1,5 +1,6 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 const TOKEN_STORAGE_KEY = "ecosmoke_auth_token";
+const AGE_TOKEN_STORAGE_KEY = "ecosmoke_age_verification";
 
 // -------------------------------------------------------------------------
 // Session token helpers (shared by admin + customer — role comes from the
@@ -17,6 +18,11 @@ export function setAuthToken(token: string) {
 
 export function clearAuthToken() {
   if (typeof window !== "undefined") localStorage.removeItem(TOKEN_STORAGE_KEY);
+}
+
+export function getAgeVerificationToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(AGE_TOKEN_STORAGE_KEY);
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -46,12 +52,18 @@ async function authedRequest<T>(path: string, options?: RequestInit): Promise<T>
     ...options,
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(getAgeVerificationToken() ? { "x-age-verification": getAgeVerificationToken() as string } : {}),
       ...options?.headers,
     },
   });
 }
 
 export const api = {
+  verifyAge: async () => {
+    const response = await request<{ token: string }>("/auth/age-verification", { method: "POST" });
+    localStorage.setItem(AGE_TOKEN_STORAGE_KEY, response.token);
+    return response;
+  },
   // --- Storefront ---------------------------------------------------------
   getProduct: (slug: string) => request(`/products/${slug}`),
   listProducts: (query: string) => request(`/products?${query}`),

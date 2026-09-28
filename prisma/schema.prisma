@@ -140,6 +140,7 @@ model Product {
   id               String        @id @default(cuid())
   title            String
   slug             String        @unique
+  brand            String?
   description      String
   fabricDetails    String?
   careInstructions String?
@@ -194,6 +195,8 @@ model ProductVariant {
   size          SizeLabel
   color         String
   fabricOption  String? // e.g. "Premium Lawn", "Silk Blend"
+  flavour       String?
+  nicotineStrength String?
   variantPrice  Decimal   @db.Decimal(10, 2) // overrides basePrice when set
   stockQuantity Int       @default(0)
   isActive      Boolean   @default(true)
@@ -205,6 +208,7 @@ model ProductVariant {
 
   @@unique([productId, size, color, fabricOption])
   @@index([productId])
+  @@index([nicotineStrength])
 }
 
 model ProductImage {

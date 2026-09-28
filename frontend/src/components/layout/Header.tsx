@@ -13,21 +13,49 @@ export interface HeaderNavLink {
   children?: HeaderNavLink[];
 }
 
+export interface HeaderMegaMenuColumn {
+  title: string;
+  links: HeaderNavLink[];
+}
+
 const DEFAULT_NAV_LINKS: HeaderNavLink[] = [
   { label: "Home", href: "/" },
   { label: "Shop", href: "/collections/all" },
-  { label: "Disposable Vapes", href: "/collections/disposable-vapes" },
+  { label: "Prefilled Kits", href: "/collections/disposable-vape-alternatives" },
   { label: "E-Liquids", href: "/collections/e-liquids" },
-  { label: "Pod Kits", href: "/collections/pod-kits" },
+  { label: "Vaping Kits", href: "/collections/vaping-kits" },
   { label: "Accessories", href: "/collections/accessories" },
   { label: "Rewards", href: "/account" },
   { label: "Track Order", href: "/track-order" },
 ];
 
-export default function Header({ navLinks = DEFAULT_NAV_LINKS }: { navLinks?: HeaderNavLink[] }) {
+const DEFAULT_MEGA_MENU: HeaderMegaMenuColumn[] = [
+  {
+    title: "Shop by Brand",
+    links: ["Elfliq by Elf Bar", "Bar Juice 5000", "Elux Liquid", "SKE Crystal", "Hayati", "IVG", "Lost Mary", "Hangsen", "A-Steam", "Nasty Juice"].map((label) => ({ label, href: `/collections/all?search=${encodeURIComponent(label)}` })),
+  },
+  {
+    title: "Shop By Bestsellers",
+    links: ["Elux Legend", "Hayati", "Elfliq", "IVG Salt", "Bar Juice 5000", "SKE Crystal", "Fruity Vapes", "Nasty Salt"].map((label) => ({ label, href: `/collections/all?search=${encodeURIComponent(label)}` })),
+  },
+  {
+    title: "Shop By Flavour",
+    links: ["Blueberry", "Grape", "Gummy Bear", "Lemon & Lime", "Lemonade", "Mango", "Menthol", "Pineapple", "Strawberry", "Watermelon"].map((label) => ({ label, href: `/collections/all?search=${encodeURIComponent(label)}` })),
+  },
+  {
+    title: "Shop By Offers",
+    links: [
+      { label: "Bundle Deal: 3 Free", href: "/pages/vape-deals" },
+      { label: "Best Sellers", href: "/collections/all?sortBy=best_selling" },
+    ],
+  },
+];
+
+export default function Header({ navLinks = DEFAULT_NAV_LINKS, megaMenu = DEFAULT_MEGA_MENU }: { navLinks?: HeaderNavLink[]; megaMenu?: HeaderMegaMenuColumn[] }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const visibleMegaMenu = megaMenu.length ? megaMenu : DEFAULT_MEGA_MENU;
 
   const openCart = useCartStore((s) => s.openCart);
   const itemCount = useCartStore((s) => s.itemCount());
@@ -58,7 +86,30 @@ export default function Header({ navLinks = DEFAULT_NAV_LINKS }: { navLinks?: He
               >
                 {link.label}
               </Link>
-              {link.children?.length ? (
+              {link.label.toLowerCase() === "shop" ? (
+                <div className="invisible absolute left-1/2 top-full z-50 w-screen -translate-x-[35%] border-t border-neutral-100 bg-white opacity-0 shadow-[0_16px_35px_rgba(10,37,64,0.12)] transition-all duration-200 group-hover:visible group-hover:opacity-100">
+                  <div className="mx-auto grid max-w-7xl grid-cols-4 gap-8 px-4 py-7">
+                    {visibleMegaMenu.map((column) => (
+                      <div key={column.title}>
+                        <h3 className="border-b border-neutral-200 pb-3 text-sm font-semibold text-[#111]">
+                          {column.title}
+                        </h3>
+                        <div className="mt-4 space-y-3">
+                          {column.links.map((item) => (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              className="block text-sm text-neutral-500 transition-colors hover:text-[#0A2540]"
+                            >
+                              {item.label}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : link.children?.length ? (
                 <div className="invisible absolute left-1/2 top-full z-50 mt-4 w-64 -translate-x-1/2 rounded-xl border border-neutral-200 bg-white p-3 opacity-0 shadow-xl transition-all group-hover:visible group-hover:mt-3 group-hover:opacity-100">
                   {link.children.map((child) => (
                     <Link key={child.href} href={child.href} className="block rounded-lg px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 hover:text-[#0A2540]">
@@ -166,6 +217,29 @@ export default function Header({ navLinks = DEFAULT_NAV_LINKS }: { navLinks?: He
                     >
                       {link.label}
                     </Link>
+                    {link.label.toLowerCase() === "shop" && (
+                      <div className="mt-4 space-y-5 border-t border-neutral-100 pt-4">
+                        {visibleMegaMenu.map((column) => (
+                          <div key={column.title}>
+                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#0A2540]">
+                              {column.title}
+                            </p>
+                            <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                              {column.links.map((item) => (
+                                <Link
+                                  key={item.href}
+                                  href={item.href}
+                                  onClick={() => setIsDrawerOpen(false)}
+                                  className="text-xs text-neutral-500 hover:text-[#0A2540]"
+                                >
+                                  {item.label}
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     {link.children?.map((child) => (
                       <Link key={child.href} href={child.href} onClick={() => setIsDrawerOpen(false)} className="ml-4 mt-2 block text-xs text-neutral-500">
                         {child.label}

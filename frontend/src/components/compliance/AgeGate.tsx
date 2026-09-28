@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { api } from "@/lib/api";
 
 const AGE_GATE_KEY = "ecosmok-age-confirmed";
 
@@ -11,9 +12,14 @@ export default function AgeGate() {
     setIsVisible(localStorage.getItem(AGE_GATE_KEY) !== "true");
   }, []);
 
-  function confirmAge() {
-    localStorage.setItem(AGE_GATE_KEY, "true");
-    setIsVisible(false);
+  async function confirmAge() {
+    try {
+      await api.verifyAge();
+      localStorage.setItem(AGE_GATE_KEY, "true");
+      setIsVisible(false);
+    } catch {
+      // Keep the gate visible until the backend issues an attestation.
+    }
   }
 
   if (!isVisible) return null;

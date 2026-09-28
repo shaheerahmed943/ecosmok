@@ -4,6 +4,10 @@ import { requireAuth, AuthenticatedRequest } from "../middleware/jwtAuth";
 
 const router = Router();
 
+router.post("/age-verification", (_req: Request, res: Response) => {
+  res.status(200).json({ token: authService.issueAgeVerificationToken(), expiresIn: "24h" });
+});
+
 /** POST /api/auth/register — customer self-registration. */
 router.post("/register", async (req: Request, res: Response, next: NextFunction) => {
   try {

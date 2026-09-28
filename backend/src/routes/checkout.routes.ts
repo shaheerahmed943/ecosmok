@@ -3,7 +3,7 @@ import { calculateShipping } from "../services/shipping.service";
 import { CheckoutError, processCodCheckout, trackOrder } from "../services/checkout.service";
 import { createPaymentSession } from "../services/payment.service";
 import { CheckoutRequest } from "../types";
-import { optionalAuth, AuthenticatedRequest } from "../middleware/jwtAuth";
+import { optionalAuth, AuthenticatedRequest, requireAgeVerified } from "../middleware/jwtAuth";
 
 const router = Router();
 
@@ -31,9 +31,9 @@ router.post("/shipping-quote", async (req: Request, res: Response, next: NextFun
  * Cash-on-Delivery checkout. Validates stock + coupon inside a DB
  * transaction and returns the created order summary.
  */
-router.post("/", optionalAuth, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+router.post("/", requireAgeVerified, optionalAuth, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const payload = req.body as CheckoutRequest;
+    const payload = { ...req.body, ageVerified: true } as CheckoutRequest;
 
     if (!payload.customerName || !payload.customerPhone || !payload.shippingCity) {
       return res.status(400).json({ error: "Missing required customer or shipping details." });

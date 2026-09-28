@@ -3,8 +3,11 @@ import jwt from "jsonwebtoken";
 import { prisma } from "../config/db";
 import { AuthResponse, AuthUser } from "../types";
 
-const JWT_SECRET = process.env.JWT_SECRET ?? "dev-only-secret-change-me";
+const JWT_SECRET = process.env.JWT_SECRET ?? (process.env.NODE_ENV === "production"
+  ? (() => { throw new Error("JWT_SECRET must be configured in production."); })()
+  : "dev-only-secret-change-me");
 const JWT_EXPIRES_IN = "7d";
+const AGE_VERIFICATION_EXPIRES_IN = "24h";
 
 export class AuthError extends Error {
   constructor(message: string, public statusCode = 400) {
@@ -31,6 +34,10 @@ function toAuthUser(user: {
 
 function issueToken(userId: string, role: string): string {
   return jwt.sign({ sub: userId, role }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+}
+
+export function issueAgeVerificationToken(): string {
+  return jwt.sign({ ageVerified: true }, JWT_SECRET, { expiresIn: AGE_VERIFICATION_EXPIRES_IN });
 }
 
 /**
@@ -84,6 +91,15 @@ export async function login(email: string, password: string): Promise<AuthRespon
 export interface JwtPayload {
   sub: string;
   role: string;
+}
+
+export function verifyAgeVerificationToken(token: string): boolean {
+  try {
+    const payload = jwt.verify(token, JWT_SECRET) as { ageVerified?: boolean };
+    return payload.ageVerified === true;
+  } catch {
+    return false;
+  }
 }
 
 export function verifyToken(token: string): JwtPayload {

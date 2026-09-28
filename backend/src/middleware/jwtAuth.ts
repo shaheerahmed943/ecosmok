@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { verifyToken } from "../services/auth.service";
+import { verifyAgeVerificationToken, verifyToken } from "../services/auth.service";
 
 export interface AuthenticatedRequest extends Request {
   userId?: string;
@@ -10,6 +10,14 @@ function extractToken(req: Request): string | null {
   const header = req.headers.authorization;
   if (header?.startsWith("Bearer ")) return header.slice(7);
   return null;
+}
+
+export function requireAgeVerified(req: Request, res: Response, next: NextFunction) {
+  const token = req.header("x-age-verification");
+  if (!token || !verifyAgeVerificationToken(token)) {
+    return res.status(403).json({ error: "Age verification is required." });
+  }
+  next();
 }
 
 /** Requires a valid JWT for ANY logged-in user (admin or customer). */

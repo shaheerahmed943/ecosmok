@@ -35,9 +35,9 @@ const DEFAULT_FOOTER_CONTENT: FooterContent = {
       title: "Shop",
       links: [
         { label: "New Arrivals", href: "/collections/all" },
-        { label: "Disposable Vapes", href: "/collections/disposable-vapes" },
+        { label: "Prefilled Kits", href: "/collections/disposable-vape-alternatives" },
         { label: "E-Liquids", href: "/collections/e-liquids" },
-        { label: "Pod Kits", href: "/collections/pod-kits" },
+        { label: "Vaping Kits", href: "/collections/vaping-kits" },
         { label: "Accessories", href: "/collections/accessories" },
       ],
     },

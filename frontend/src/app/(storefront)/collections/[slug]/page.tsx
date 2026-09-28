@@ -9,9 +9,13 @@ interface PLPPageProps {
 
 const CATEGORY_TITLES: Record<string, string> = {
   all: "All Products",
-  stitched: "Stitched",
-  unstitched: "Unstitched",
-  "boutique-exclusive": "Boutique Exclusive",
+  "disposable-vape-alternatives": "Prefilled Kits",
+  "e-liquids": "E-Liquids",
+  "vaping-kits": "Vaping Kits",
+  "vape-kit-bundles": "Vape Kit Bundles",
+  "pods-coils": "Pods & Coils",
+  "nicotine-pouches": "Nicotine Pouches",
+  accessories: "Accessories",
 };
 
 export default async function CollectionPage({ params, searchParams }: PLPPageProps) {

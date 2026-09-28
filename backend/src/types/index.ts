@@ -82,6 +82,8 @@ export interface ProductVariantDTO {
   size: SizeLabel;
   color: string;
   fabricOption: string | null;
+  flavour: string | null;
+  nicotineStrength: string | null;
   variantPrice: number;
   stockQuantity: number;
   isActive: boolean;
@@ -91,6 +93,7 @@ export interface ProductDTO {
   id: string;
   title: string;
   slug: string;
+  brand: string | null;
   description: string;
   fabricDetails: string | null;
   careInstructions: string | null;

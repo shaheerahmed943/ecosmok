@@ -5,7 +5,7 @@ import { FileUp } from "lucide-react";
 import { api } from "@/lib/api";
 
 const imports = [
-  { type: "products" as const, title: "Products", columns: "slug, title, description, basePrice, categorySlug, type, status, variantSku, size, color, variantPrice, stockQuantity, imageUrl, fabricTags" },
+  { type: "products" as const, title: "Products", columns: "Handle, Title, Body (HTML), Type, Tags, Variant SKU, Variant Price, Variant Inventory Qty, Option1 Value, Option2 Value, Image Src (optional)" },
   { type: "categories" as const, title: "Collections", columns: "name, slug, description, imageUrl, parentSlug, isActive, sortOrder" },
   { type: "users" as const, title: "Customers", columns: "name, email, password, phone" },
 ];
@@ -21,7 +21,7 @@ export default function ImportsPage() {
     finally { setBusy(null); }
   }
   return <div className="max-w-4xl space-y-8">
-    <header><h1 className="font-serif text-3xl text-[#0A2540]">CSV Imports</h1><p className="mt-2 text-sm text-neutral-500">Upload or update catalog data in bulk. Product rows with the same slug become variants.</p></header>
+    <header><h1 className="font-serif text-3xl text-[#0A2540]">CSV Imports</h1><p className="mt-2 text-sm text-neutral-500">Upload a standard product CSV to add or update products. Image URLs are optional, and rows with the same Handle become variants.</p></header>
     {message && <p className="rounded-lg bg-[#F5F2EC] p-3 text-sm text-[#0A2540]">{message}</p>}
     <div className="grid gap-5 md:grid-cols-3">
       {imports.map((item) => <section key={item.type} className="rounded-xl border border-neutral-200 bg-white p-5">

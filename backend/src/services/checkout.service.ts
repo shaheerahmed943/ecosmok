@@ -38,13 +38,20 @@ export async function processCodCheckout(
     }[] = [];
 
     for (const item of payload.items) {
+      if (!Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 100) {
+        throw new CheckoutError("Each item quantity must be a whole number between 1 and 100.");
+      }
+
       const variant = await tx.productVariant.findUnique({
         where: { id: item.variantId },
         include: { product: true },
       });
 
-      if (!variant || !variant.isActive) {
+      if (!variant || !variant.isActive || variant.product.status !== "ACTIVE") {
         throw new CheckoutError(`Variant ${item.variantId} is not available.`);
+      }
+      if (variant.productId !== item.productId) {
+        throw new CheckoutError("Cart contains an invalid product variant.");
       }
       if (variant.stockQuantity < item.quantity) {
         throw new CheckoutError(

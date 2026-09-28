@@ -451,11 +451,32 @@ export interface FabricTile {
   link: string;
 }
 
+export interface HomepageWidgetCard {
+  heading: string;
+  imageUrl: string;
+  link: string;
+}
+
+export interface HomepageWidgetTab {
+  label: string;
+  type: "cards" | "collection";
+  collectionSlug?: string;
+  cards?: HomepageWidgetCard[];
+}
+
+export interface HomepageWidget {
+  id: string;
+  title: string;
+  tabs: HomepageWidgetTab[];
+}
+
 export interface HomepageContent {
   heroSlides: HeroSlide[];
   fabricTiles: FabricTile[];
+  homeWidgets?: HomepageWidget[];
   promoBanner?: { text: string; link?: string; isActive: boolean };
   featuredCollectionTitle?: string;
+  featuredCollectionSlug?: string;
 }
 
 const DEFAULT_HOMEPAGE_CONTENT: HomepageContent = {
@@ -495,8 +516,29 @@ const DEFAULT_HOMEPAGE_CONTENT: HomepageContent = {
     { name: "Vape Kits", imageUrl: "https://images.unsplash.com/photo-1556740749-887f6717d7e4?w=600", link: "/collections/vaping-kits" },
     { name: "Pods & Coils", imageUrl: "https://images.unsplash.com/photo-1556740758-90de374c12ad?w=600", link: "/collections/pods-coils" },
   ],
+  homeWidgets: [
+    {
+      id: "featured-brands",
+      title: "Featured Brands",
+      tabs: [
+        {
+          label: "Brands",
+          type: "cards",
+          cards: [
+            { heading: "Hayati", imageUrl: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600", link: "/collections/all?search=Hayati" },
+            { heading: "Vaporesso", imageUrl: "https://images.unsplash.com/photo-1556740749-887f6717d7e4?w=600", link: "/collections/all?search=Vaporesso" },
+            { heading: "Elfliq", imageUrl: "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=600", link: "/collections/all?search=Elfliq" },
+            { heading: "Lost Mary", imageUrl: "https://images.unsplash.com/photo-1556740758-90de374c12ad?w=600", link: "/collections/all?search=Lost%20Mary" },
+          ],
+        },
+        { label: "Best Sellers", type: "collection", collectionSlug: "all" },
+        { label: "New Arrivals", type: "collection", collectionSlug: "all" },
+      ],
+    },
+  ],
   promoBanner: { text: "Free UK delivery available | Subscribe and get 10% off your first order", link: "/pages/vape-deals", isActive: true },
   featuredCollectionTitle: "Vape Kit Bundles",
+  featuredCollectionSlug: "vaping-kits",
 };
 
 async function getContentByKey<T>(key: string, fallback: T): Promise<T> {
@@ -690,8 +732,14 @@ export interface HeaderNavLink {
   href: string;
 }
 
+export interface HeaderMegaMenuColumn {
+  title: string;
+  links: HeaderNavLink[];
+}
+
 export interface HeaderContent {
   navLinks: HeaderNavLink[];
+  megaMenu: HeaderMegaMenuColumn[];
 }
 
 const DEFAULT_HEADER_CONTENT: HeaderContent = {
@@ -704,6 +752,58 @@ const DEFAULT_HEADER_CONTENT: HeaderContent = {
     { label: "Deals", href: "/pages/vape-deals" },
     { label: "Blogs", href: "/blogs/news" },
     { label: "Track Order", href: "/track-order" },
+  ],
+  megaMenu: [
+    {
+      title: "Shop by Brand",
+      links: [
+        { label: "Elfliq by Elf Bar", href: "/collections/all?search=Elfliq%20by%20Elf%20Bar" },
+        { label: "Bar Juice 5000", href: "/collections/all?search=Bar%20Juice%205000" },
+        { label: "Elux Liquid", href: "/collections/all?search=Elux%20Liquid" },
+        { label: "SKE Crystal", href: "/collections/all?search=SKE%20Crystal" },
+        { label: "Hayati", href: "/collections/all?search=Hayati" },
+        { label: "IVG", href: "/collections/all?search=IVG" },
+        { label: "Lost Mary", href: "/collections/all?search=Lost%20Mary" },
+        { label: "Hangsen", href: "/collections/all?search=Hangsen" },
+        { label: "A-Steam", href: "/collections/all?search=A-Steam" },
+        { label: "Nasty Juice", href: "/collections/all?search=Nasty%20Juice" },
+      ],
+    },
+    {
+      title: "Shop By Bestsellers",
+      links: [
+        { label: "Elux Legend", href: "/collections/all?search=Elux%20Legend" },
+        { label: "Hayati", href: "/collections/all?search=Hayati" },
+        { label: "Elfliq", href: "/collections/all?search=Elfliq" },
+        { label: "IVG Salt", href: "/collections/all?search=IVG%20Salt" },
+        { label: "Bar Juice 5000", href: "/collections/all?search=Bar%20Juice%205000" },
+        { label: "SKE Crystal", href: "/collections/all?search=SKE%20Crystal" },
+        { label: "Fruity Vapes", href: "/collections/all?search=Fruity%20Vapes" },
+        { label: "Nasty Salt", href: "/collections/all?search=Nasty%20Salt" },
+      ],
+    },
+    {
+      title: "Shop By Flavour",
+      links: [
+        { label: "Blueberry", href: "/collections/all?search=Blueberry" },
+        { label: "Grape", href: "/collections/all?search=Grape" },
+        { label: "Gummy Bear", href: "/collections/all?search=Gummy%20Bear" },
+        { label: "Lemon & Lime", href: "/collections/all?search=Lemon%20%26%20Lime" },
+        { label: "Lemonade", href: "/collections/all?search=Lemonade" },
+        { label: "Mango", href: "/collections/all?search=Mango" },
+        { label: "Menthol", href: "/collections/all?search=Menthol" },
+        { label: "Pineapple", href: "/collections/all?search=Pineapple" },
+        { label: "Strawberry", href: "/collections/all?search=Strawberry" },
+        { label: "Watermelon", href: "/collections/all?search=Watermelon" },
+      ],
+    },
+    {
+      title: "Shop By Offers",
+      links: [
+        { label: "Bundle Deal: 3 Free", href: "/pages/vape-deals" },
+        { label: "Best Sellers", href: "/collections/all?sortBy=best_selling" },
+      ],
+    },
   ],
 };
 
